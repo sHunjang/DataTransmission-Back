@@ -1,8 +1,8 @@
-const pool = require("../db/db");
+const { middleDb } = require("../db/db");
 
 const getAllJsonLogs = async (req, res) => {
     try {
-        const result = await pool.query(`SELECT * FROM json_transmission_logs ORDER BY id DESC`);
+        const result = await middleDb.query(`SELECT * FROM json_transmission_logs ORDER BY id DESC`);
         res.status(200).json(result.rows);
     } catch (err) {
         console.error("로그 조회 실패:", err.message);

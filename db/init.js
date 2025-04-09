@@ -1,7 +1,6 @@
-const pool = require("./db");
+const { middleDb, landDb, seaDb } = require("./db");
 
-
-// transmissions Table 없을 때 생성 코드
+// transmissions 테이블
 const createTransmissionTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS transmissions (
@@ -13,15 +12,11 @@ const createTransmissionTable = async () => {
             status TEXT DEFAULT 'uploaded'
         );
     `;
-    try {
-        await pool.query(query);
-        console.log("transmissions 테이블 생성..");
-    } catch (error) {
-        console.error("transmissions 테이블 생성 오류: ", error);
-    }
+    await middleDb.query(query);
+    console.log("transmissions 테이블 생성 완료");
 };
 
-// transmission_logs Table 없을 때 생성 코드
+// transmission_logs 테이블
 const createTransmissionLogTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS transmission_logs (
@@ -33,16 +28,11 @@ const createTransmissionLogTable = async () => {
             response TEXT
         );
     `;
-    try {
-        await pool.query(query);
-        console.log("transmission_logs 테이블 생성..");
-    } catch (error) {
-        console.error("transmission_logs 테이블 생성 오류: ", error);
-    }
+    await middleDb.query(query);
+    console.log("transmission_logs 테이블 생성 완료");
 };
 
-
-// transmission_jobs 생성 코드
+// transmission_jobs 테이블
 const createTransmissionJobsTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS transmission_jobs (
@@ -54,14 +44,11 @@ const createTransmissionJobsTable = async () => {
             file_count INTEGER
         );
     `;
-    try {
-        await pool.query(query);
-        console.log("transmission_jobs 테이블 생성..");
-    } catch (err) {
-        console.error("transmission_jobs 테이블 생성 오류: ", err);
-    }
+    await middleDb.query(query);
+    console.log("transmission_jobs 테이블 생성 완료");
 };
 
+// json_data 테이블
 const createJsonDataStorageTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS json_data (
@@ -70,14 +57,11 @@ const createJsonDataStorageTable = async () => {
             received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     `;
-    try {
-        await pool.query(query);
-        console.log("json_data 테이블 생성..");
-    } catch (err) {
-        console.error("json_data 테이블 생성 오류: ", err);
-    }
+    await middleDb.query(query);
+    console.log("json_data 테이블 생성 완료");
 };
 
+// json_transmission_logs 테이블
 const createJsonTransmissionLogTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS json_transmission_logs (
@@ -87,11 +71,53 @@ const createJsonTransmissionLogTable = async () => {
             sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     `;
+    await middleDb.query(query);
+    console.log("json_transmission_logs 테이블 생성 완료");
+};
+
+// 육상 사용자 테이블
+const createLandUserTables = async () => {
     try {
-        await pool.query(query);
-        console.log("json_transmission_logs 테이블 생성..");
+        await landDb.query(`
+            CREATE TABLE IF NOT EXISTS user_data (
+                id SERIAL PRIMARY KEY,
+                data JSONB NOT NULL,
+                received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        await landDb.query(`
+            CREATE TABLE IF NOT EXISTS user_log (
+                id SERIAL PRIMARY KEY,
+                data JSONB NOT NULL,
+                received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log("[육상 DB] user_data, user_log 테이블 생성 완료");
     } catch (err) {
-        console.error("테이블 생성 요류:", err.message);
+        console.error("[육상 DB] 테이블 생성 실패:", err.message);
+    }
+};
+
+// 해상 사용자 테이블
+const createSeaUserTables = async () => {
+    try {
+        await seaDb.query(`
+            CREATE TABLE IF NOT EXISTS user_data (
+                id SERIAL PRIMARY KEY,
+                data JSONB NOT NULL,
+                received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        await seaDb.query(`
+            CREATE TABLE IF NOT EXISTS user_log (
+                id SERIAL PRIMARY KEY,
+                data JSONB NOT NULL,
+                received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log("[해상 DB] user_data, user_log 테이블 생성 완료");
+    } catch (err) {
+        console.error("[해상 DB] 테이블 생성 실패:", err.message);
     }
 };
 
@@ -101,4 +127,6 @@ module.exports = {
     createTransmissionJobsTable,
     createJsonDataStorageTable,
     createJsonTransmissionLogTable,
+    createLandUserTables,
+    createSeaUserTables,
 };

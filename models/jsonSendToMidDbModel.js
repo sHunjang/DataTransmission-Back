@@ -1,31 +1,24 @@
-const { landDb, middleDb } = require("../db/db");
+const { middleDb, landDb } = require("../db/db");
 
 
-// 송신 DB 데이터 저장
+// 송신 -> 중간 DB 데이터 저장
 const insertJsonData = async (data) => {
-    const { tableName } = req.params;
     const query = `
-        INSERT INTO ${tableName} (data)
+        INSERT INTO json_data (data)
         VALUES ($1)
     `;
-    await landDb.query(query, [data]);
+    await middleDb.query(query, [data]);
 };
 
-// 송신 DB 데이터 조회
+// 중간 DB 데이터 조회
 const fetchAllJsonData = async () => {
-    const result = await landDb.query(`
+    const result = await middleDb.query(`
         SELECT * FROM json_data ORDER BY id DESC
     `);
     return result.rows;
 };
 
-// 송신 DB 데이터 삭제
-const deleteJsonById = async (id) => {
-    const query = `DELETE FROM json_data WHERE id = $1`;
-    await landDb.query(query, [id]);
-};
-
-
+// 중간 DB -> 수신 DB 데이터 저장
 const saveJsonData = async (req, res) => {
     try {
         const data = req.body;
@@ -37,9 +30,15 @@ const saveJsonData = async (req, res) => {
     }
 };
 
-// 수신 DB 데이터 삭제
+// 중간 DB -> 수신 DB 데이터 전송 후 삭제 -
+const deleteJsonById = async (id) => {
+    const query = `DELETE FROM json_data WHERE id = $1`;
+    await middleDb.query(query, [id]);
+};
+
+
 const deleteAfterSend = async (id) => {
-    await landDb.query(`DELETE FROM json_data WHERE id = $1`, [id]);
+    await middleDb.query(`DELETE FROM json_data WHERE id = $1`, [id]);
 };
 
 module.exports = {

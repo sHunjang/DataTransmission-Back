@@ -1,6 +1,6 @@
 // 파일 전송 기록 저장
 
-const pool = require("../db/db");
+const { middleDb } = require("../db/db");
 
 const saveTransmissionJob = async ({
 
@@ -28,20 +28,20 @@ const saveTransmissionJob = async ({
         threadCount,
         fileCount,
     ];
-    const result = await pool.query(query, values);
+    const result = await middleDb.query(query, values);
     return result.rows[0];
 };
 
 
 // 전송 정보 전체 조회
 const getAllJobs = async () => {
-    const result = await pool.query(`SELECT * FROM transmission_jobs ORDER BY id`);
+    const result = await middleDb.query(`SELECT * FROM transmission_jobs ORDER BY id`);
     return result.rows;
 };
 
 // 전송 정보 단일 조회
 const getJobById = async (id) => {
-    const result = await pool.query(`SELECT * FROM transmission_jobs WHERE id = $1`, [id]);
+    const result = await middleDb.query(`SELECT * FROM transmission_jobs WHERE id = $1`, [id]);
     return result.rows[0];
 };
 

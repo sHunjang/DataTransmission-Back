@@ -1,6 +1,6 @@
 // 파일 전송 성공 여부 로그 저장
 
-const pool = require("../db/db");
+const { middleDb } = require("../db/db");
 
 // 파일 전송 로그 저장
 const saveTransmissionLog = async ({ transmissionId, filename, status, response }) => {
@@ -10,17 +10,17 @@ const saveTransmissionLog = async ({ transmissionId, filename, status, response 
         RETURNING *;
     `;
     const values = [transmissionId, filename, status, response];
-    const result = await pool.query(query, values);
+    const result = await middleDb.query(query, values);
     return result.rows[0];
 };
 
 const getAllLogs = async () => {
-    const result = await pool.query("SELECT * FROM transmission_logs ORDER BY sent_at;");
+    const result = await middleDb.query("SELECT * FROM transmission_logs ORDER BY sent_at;");
     return result.rows;
 };
 
 const getLogsByTransmissionId = async (transmissionId) => {
-    const result = await pool.query(
+    const result = await middleDb.query(
         "SELECT * FROM transmission_logs WHERE transmission_id = $1 ORDER BY sent_at;",
         [transmissionId]
     );

@@ -1,9 +1,18 @@
-const pool = require("../db/db");
+const { middleDb, landDb } = require("../db/db");
 const axios = require("axios");
-const { insertJsonData, fetchAllJsonData, deleteJsonById, deleteAfterSend } = require("../models/jsonDataModel");
-const { saveJsonTransmissionLog } = require("../models/jsonTransmissionLogModel");
 
-// 기본 JSON 저장 및 조회
+const {
+    insertJsonData,
+    fetchAllJsonData,
+    deleteJsonById,
+    deleteAfterSend
+} = require("../models/jsonDataModel");
+
+const {
+    saveJsonTransmissionLog
+} = require("../models/jsonTransmissionLogModel");
+
+// 중간 DB - JSON 저장
 const saveJsonData = async (req, res) => {
     try {
         const data = req.body;
@@ -15,6 +24,7 @@ const saveJsonData = async (req, res) => {
     }
 };
 
+// 중간 DB - 전체 조회
 const getAllJsonData = async (req, res) => {
     try {
         const result = await fetchAllJsonData();
@@ -25,6 +35,7 @@ const getAllJsonData = async (req, res) => {
     }
 };
 
+// 중간 DB - 삭제
 const deleteJsonData = async (req, res) => {
     const { id } = req.params;
     try {
@@ -36,16 +47,15 @@ const deleteJsonData = async (req, res) => {
     }
 };
 
-// JSON 데이터 테이블 저장
+// 육상 DB - JSON 테이블에 저장 + 로그
 const saveJsonToTable = async (req, res) => {
     const { tableName } = req.params;
     const jsonData = req.body;
 
     try {
         const query = `INSERT INTO ${tableName} (data) VALUES ($1)`;
-        await pool.query(query, [jsonData]);
+        await landDb.query(query, [jsonData]);
 
-        // 자동 전송 로그 저장
         await saveJsonTransmissionLog({ sentData: jsonData, tableName });
 
         res.status(201).json({ message: "저장 성공 및 로그 기록 완료" });
@@ -55,11 +65,10 @@ const saveJsonToTable = async (req, res) => {
     }
 };
 
-
-// 테이블 목록 조회
+// 육상 DB - 테이블 목록 조회
 const getTableNames = async (req, res) => {
     try {
-        const result = await pool.query(`
+        const result = await landDb.query(`
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
@@ -72,6 +81,7 @@ const getTableNames = async (req, res) => {
     }
 };
 
+// 중간 DB - 페이징 조회
 const getPaginatedJsonData = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -81,8 +91,8 @@ const getPaginatedJsonData = async (req, res) => {
         const dataQuery = `SELECT * FROM json_data ORDER BY id DESC LIMIT $1 OFFSET $2`;
         const countQuery = `SELECT COUNT(*) FROM json_data`;
 
-        const dataResult = await pool.query(dataQuery, [limit, offset]);
-        const countResult = await pool.query(countQuery);
+        const dataResult = await middleDb.query(dataQuery, [limit, offset]);
+        const countResult = await middleDb.query(countQuery);
 
         const totalCount = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalCount / limit);
@@ -98,9 +108,10 @@ const getPaginatedJsonData = async (req, res) => {
     }
 };
 
+// 육상 DB - 전송 로그 조회
 const getAllJsonLogs = async (req, res) => {
     try {
-        const result = await pool.query(`SELECT * FROM json_transmission_logs ORDER BY sent_at DESC`);
+        const result = await landDb.query(`SELECT * FROM json_transmission_logs`);
         res.json(result.rows);
     } catch (err) {
         console.error("로그 조회 실패:", err.message);
@@ -108,6 +119,7 @@ const getAllJsonLogs = async (req, res) => {
     }
 };
 
+// 중간 DB → 외부 서버 전송 후 삭제
 const sendAndDeleteJsonData = async (req, res) => {
     const { serverUrl } = req.body;
 
@@ -130,8 +142,6 @@ const sendAndDeleteJsonData = async (req, res) => {
         res.status(500).json({ message: "전송 중 오류 발생" });
     }
 };
-
-
 
 module.exports = {
     saveJsonData,
