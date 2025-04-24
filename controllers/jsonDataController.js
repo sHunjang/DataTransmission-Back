@@ -88,8 +88,8 @@ const getPaginatedJsonData = async (req, res) => {
     const offset = (page - 1) * limit;
 
     try {
-        const dataQuery = `SELECT * FROM json_data ORDER BY id DESC LIMIT $1 OFFSET $2`;
-        const countQuery = `SELECT COUNT(*) FROM json_data`;
+        const dataQuery = `SELECT * FROM Received_data_middle ORDER BY id DESC LIMIT $1 OFFSET $2`;
+        const countQuery = `SELECT COUNT(*) FROM Received_data_middle`;
 
         const dataResult = await middleDb.query(dataQuery, [limit, offset]);
         const countResult = await middleDb.query(countQuery);
@@ -108,14 +108,17 @@ const getPaginatedJsonData = async (req, res) => {
     }
 };
 
-// 육상 DB - 전송 로그 조회
-const getAllJsonLogs = async (req, res) => {
+
+// 육상 DB - 전송 로그 삭제
+const deleteJsonData_SendDB = async (req, res) => {
+    const { id } = req.params;
     try {
-        const result = await landDb.query(`SELECT * FROM json_transmission_logs`);
-        res.json(result.rows);
+        await deleteJsonById(id);
+        res.json({ message: "삭제 완료" });
+        console.log(`ID: ${id} 삭제 완료`);
     } catch (err) {
-        console.error("로그 조회 실패:", err.message);
-        res.status(500).json({ message: "로그 조회 실패" });
+        console.error("삭제 오류: ", err);
+        res.status(500).json({ message: "삭제 실패" });
     }
 };
 
@@ -136,7 +139,7 @@ const sendAndDeleteJsonData = async (req, res) => {
             }
         }
 
-        res.json({ message: "전송 작업 완료" });
+        res.json({ message: "전송 내용 삭제 완료" });
     } catch (err) {
         console.error("전송 작업 실패:", err);
         res.status(500).json({ message: "전송 중 오류 발생" });
@@ -150,6 +153,6 @@ module.exports = {
     saveJsonToTable,
     getTableNames,
     getPaginatedJsonData,
-    getAllJsonLogs,
     sendAndDeleteJsonData,
+    deleteJsonData_SendDB,
 };
